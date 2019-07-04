@@ -57,8 +57,8 @@ impl Label {
     }
 }
 
-impl WidgetInner for Label {
-    fn paint(&mut self, paint_ctx: &mut PaintCtx, base_state: &BaseState, _env: &Env) {
+impl<T: PartialEq + Clone> WidgetInner<T> for Label {
+    fn paint(&mut self, paint_ctx: &mut PaintCtx, base_state: &BaseState, _data: &T, _env: &Env) {
         let font_size = 15.0;
         let text_layout = self.get_layout(paint_ctx.render_ctx, font_size);
         let brush = paint_ctx.render_ctx.solid_brush(LABEL_TEXT_COLOR);
@@ -67,11 +67,11 @@ impl WidgetInner for Label {
         paint_ctx.render_ctx.draw_text(&text_layout, pos, &brush);
     }
 
-    fn layout(&mut self, _layout_ctx: &mut LayoutCtx, bc: &BoxConstraints, _env: &Env) -> Size {
+    fn layout(&mut self, _layout_ctx: &mut LayoutCtx, bc: &BoxConstraints, _data: &T, _env: &Env) -> Size {
         bc.constrain(Size::new(100.0, 17.0))
     }
 
-    fn event(&mut self, event: &Event, ctx: &mut EventCtx, env: &Env) -> Option<Action> {
+    fn event(&mut self, event: &Event, ctx: &mut EventCtx, _data: &mut T, env: &Env) -> Option<Action> {
         None
     }
 }
@@ -84,8 +84,8 @@ impl Button {
     }
 }
 
-impl WidgetInner for Button {
-    fn paint(&mut self, paint_ctx: &mut PaintCtx, base_state: &BaseState, env: &Env) {
+impl<T: PartialEq + Clone> WidgetInner<T> for Button {
+    fn paint(&mut self, paint_ctx: &mut PaintCtx, base_state: &BaseState, data: &T, env: &Env) {
         let is_active = base_state.is_active();
         let is_hot = base_state.is_hot();
         let bg_color = match (is_active, is_hot) {
@@ -97,14 +97,14 @@ impl WidgetInner for Button {
         let rect = base_state.layout_rect.with_origin(Point::ORIGIN);
         paint_ctx.render_ctx.fill(rect, &brush, FillRule::NonZero);
 
-        self.label.paint(paint_ctx, base_state, env);
+        self.label.paint(paint_ctx, base_state, data, env);
     }
 
-    fn layout(&mut self, layout_ctx: &mut LayoutCtx, bc: &BoxConstraints, env: &Env) -> Size {
-        self.label.layout(layout_ctx, bc, env)
+    fn layout(&mut self, layout_ctx: &mut LayoutCtx, bc: &BoxConstraints, data: &T, env: &Env) -> Size {
+        self.label.layout(layout_ctx, bc, data, env)
     }
 
-    fn event(&mut self, event: &Event, ctx: &mut EventCtx, _env: &Env) -> Option<Action> {
+    fn event(&mut self, event: &Event, ctx: &mut EventCtx, _data: &mut T, _env: &Env) -> Option<Action> {
         let mut result = None;
         match event {
             Event::Mouse(mouse_event) => {
