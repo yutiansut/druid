@@ -50,7 +50,7 @@ pub struct UiMain<T: Data> {
 }
 
 pub struct UiState<T: Data> {
-    root: WidgetBase<T, Box<dyn WidgetInner<T>>>,
+    root: WidgetBase<T>,
     data: T,
     // Following fields might move to a separate struct so there's access
     // from contexts.
@@ -58,14 +58,11 @@ pub struct UiState<T: Data> {
     size: Size,
 }
 
-pub struct WidgetBase<T: Data, W: WidgetInner<T>> {
+pub struct WidgetBase<T: Data> {
     state: BaseState,
     old_data: Option<T>,
-    inner: W,
+    inner: Box<dyn WidgetInner<T>>,
 }
-
-/// Convenience type for dynamic boxed widget.
-pub type BoxedWidget<T> = WidgetBase<T, Box<dyn WidgetInner<T>>>;
 
 #[derive(Default)]
 pub struct BaseState {
@@ -100,6 +97,7 @@ pub trait WidgetInner<T> {
     fn update(&mut self, ctx: &mut UpdateCtx, old_data: Option<&T>, data: &T, env: &Env);
 }
 
+/*
 // TODO: explore getting rid of this (ie be consistent about using
 // `dyn WidgetInner` only).
 impl<T> WidgetInner<T> for Box<dyn WidgetInner<T>> {
@@ -125,6 +123,7 @@ impl<T> WidgetInner<T> for Box<dyn WidgetInner<T>> {
         self.deref_mut().update(ctx, old_data, data, env);
     }
 }
+*/
 
 #[derive(Clone, Default)]
 pub struct Env {
@@ -163,12 +162,12 @@ pub struct BoxConstraints {
     max: Size,
 }
 
-impl<T: Data, W: WidgetInner<T>> WidgetBase<T, W> {
-    pub fn new(inner: W) -> WidgetBase<T, W> {
+impl<T: Data> WidgetBase<T> {
+    pub fn new(inner: impl Into<WidgetInner<T>>) -> WidgetBase<T> {
         WidgetBase {
             state: Default::default(),
             old_data: None,
-            inner,
+            inner: inner.into(),
         }
     }
 
@@ -280,17 +279,6 @@ impl<T: Data, W: WidgetInner<T>> WidgetBase<T, W> {
     }
 }
 
-// Consider putting the `'static` bound on the main impl.
-impl<T: Data, W: WidgetInner<T> + 'static> WidgetBase<T, W> {
-    pub fn boxed(self) -> BoxedWidget<T> {
-        WidgetBase {
-            state: self.state,
-            old_data: self.old_data,
-            inner: Box::new(self.inner),
-        }
-    }
-}
-
 // The following seems not to work because of the parametrization on T.
 /*
 // Convenience method for conversion to boxed widgets.
@@ -301,10 +289,16 @@ impl<T: Data, W: WidgetInner<T> + 'static> From<W> for BoxedWidget<T> {
 }
 */
 
+impl <T: Data, W: WidgetInner<T> + 'static> From<W> for Box<dyn WidgetInner<T>> {
+    fn from(w: W) -> Box<dyn WidgetInner<T>> {
+        Box::new(w)
+    }
+}
+
 impl<T: Data> UiState<T> {
     pub fn new(root: impl WidgetInner<T> + 'static, data: T) -> UiState<T> {
         UiState {
-            root: WidgetBase::new(root).boxed(),
+            root: WidgetBase::new(root),
             data,
             handle: Default::default(),
             size: Default::default(),

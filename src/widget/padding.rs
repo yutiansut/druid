@@ -25,7 +25,7 @@ pub struct Padding<T: Data> {
     top: f64,
     bottom: f64,
 
-    child: WidgetBase<T, Box<dyn WidgetInner<T>>>,
+    child: WidgetBase<T>,
 }
 
 impl<T: Data> Padding<T> {
@@ -36,7 +36,7 @@ impl<T: Data> Padding<T> {
             right: padding,
             top: padding,
             bottom: padding,
-            child: WidgetBase::new(child).boxed(),
+            child: WidgetBase::new(child),
         }
     }
 }

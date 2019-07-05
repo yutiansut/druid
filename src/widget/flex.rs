@@ -31,7 +31,7 @@ pub struct Flex<T: Data> {
 }
 
 struct ChildWidget<T: Data> {
-    widget: WidgetBase<T, Box<dyn WidgetInner<T>>>,
+    widget: WidgetBase<T>,
     params: Params,
 }
 
@@ -93,7 +93,7 @@ impl<T: Data> Flex<T> {
     pub fn add_child(&mut self, child: impl WidgetInner<T> + 'static, flex: f64) {
         let params = Params { flex };
         let child = ChildWidget {
-            widget: WidgetBase::new(child).boxed(),
+            widget: WidgetBase::new(child),
             params,
         };
         self.children.push(child);
